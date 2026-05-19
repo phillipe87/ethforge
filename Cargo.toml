@@ -1,0 +1,11 @@
+[package]
+name = "ethforge"
+version = "0.1.0"
+edition = "2021"
+authors = ["Phillipe <phillipe87@users.noreply.github.com>"]
+description = "An Ethernet packet generator for Linux"
+license = "MIT"
+
+[dependencies]
+eframe = "0.27"
+egui = "0.27"
