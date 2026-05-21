@@ -1,100 +1,41 @@
-fn main() -> eframe::Result<()> {
+//mod packet;
 
-  // Title bar
-  let window_title = "ethforge";
 
-  // Window appearance and behavior
-  let window_options = eframe::NativeOptions{
-    viewport: egui::ViewportBuilder::default()
-      .with_title("ethforge")
-      .with_inner_size([960.0, 700.0]) // starting with widthxheight in pixels
-      .with_min_inner_size([800.0, 600.0]), // can't resize smaller than this
-    ..Default::default()
-  };
+use fltk::{app, prelude::*,
+           widget::*,
+           window::Window,
+           browser::CheckBrowser,
+           menu::Choice,
+           frame::Frame
+          };
 
-  let app_creator = Box::new(|_cc: &eframe::CreationContext| -> Box<dyn eframe::App> {
-    Box::new(App::new())
-  });
+fn main() {
 
-  // Hand control to egui
-  eframe::run_native(window_title, window_options, app_creator)
-}
+  // create app
+  let app = app::App::default();
 
-// Application state struct
-struct App {
-  // status message at the bottom of the window
-  status: String,
+  let mut window = Window::new(100, 100, 400, 300, "ethforge");
 
-  // name of currently selected network interface
-  selected_iface: String,
-}
+  Frame::new(20, 20, 200, 30, "EtherType pool:");
 
-impl App {
-  fn new() -> Self {
-    Self {
-      status: String::from("Ready"),
-      selected_iface: String::from(""),
-    }
-  }
-}
+  // CheckBrowser — x, y, width, height, label
+  let mut browser = CheckBrowser::new(20, 55, 200, 150, "");
 
-impl eframe::App for App {
-  fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+  // add() takes a label and a checked state (true/false)
+  browser.add("IPv4  (0x0800)", false);
+  browser.add("ARP   (0x0806)", false);
+  browser.add("IPv6  (0x86DD)", false);
+  browser.add("VLAN  (0x8100)", false);
 
-    // top panel toolbar
-    egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-      ui.horizontal(|ui| {
-        ui.heading("ethforge");
+  // check the first item by default
+  browser.set_checked(1);
 
-        ui.separator();
+  window.end();
+  window.make_resizable(true);
+  window.resizable(&browser);
+  window.show();
 
-        if ui.button("💾 Save").clicked() {
-          self.status = "Save clicked.".to_string();
-        }
+  // run
+  app.run().unwrap();
 
-        if ui.button("📂 Load").clicked() {
-          self.status = "Load clicked.".to_string();
-        }
-      });
-    });
-
-    // bottom panel status bar
-    egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
-      ui.label(&self.status);
-    });
-
-    // left side panel
-    egui::SidePanel::left("iface_panel")
-      .min_width(160.0)
-      .show(ctx, |ui| {
-        ui.heading("Interface");
-        ui.separator();
-        // interface list
-        let ifaces = vec!["eth0", "enp3s0", "lo"];
-
-        for iface in ifaces.iter() {
-          let is_selected = self.selected_iface == *iface;
-          if ui.selectable_label(is_selected, *iface).clicked() {
-            self.selected_iface = iface.to_string();
-            self.status = format!("Interface: {}", iface);
-          }
-        }
-      });
-
-    // central panel: two columns
-    egui::CentralPanel::default().show(ctx, |ui| {
-
-      ui.columns(2, |cols| {
-        // left column: packet builder
-        cols[0].heading("Packet Builder");
-        cols[0].separator();
-        cols[0].label("Fields go here.");
-
-        // right column: hex preview
-        cols[1].heading("Hex preview");
-        cols[1].separator();
-        cols[1].label("Hex dump goes here.");
-      });
-    });
-  }
 }
