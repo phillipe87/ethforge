@@ -211,7 +211,7 @@ pub fn build_packet(cfg: &PacketConfig) -> Result<Vec<u8>, String> {
   // 6 bytes for the dst MAC
   // 6 bytes for the src MAC
   // 2 bytes for the EtherType
-  // 14 bytes total
+  // Total: 14 bytes
   let mut buf = vec![0u8; 14];
 
   let mut eth = MutableEthernetPacket::new(&mut buf)
@@ -219,7 +219,7 @@ pub fn build_packet(cfg: &PacketConfig) -> Result<Vec<u8>, String> {
 
   eth.set_source(src_mac_addr);
   eth.set_destination(dst_mac_addr);
-  eth.set_ethertype(pnet::packet::ethernet::EtherType(cfg.ethertype.value()));
+  eth.set_ethertype(pnet::packet::ethernet::EtherType(cfg.ether_type.value()));
 
   Ok(buf)
 }
