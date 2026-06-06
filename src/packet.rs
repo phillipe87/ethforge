@@ -55,10 +55,10 @@ impl EtherType {
   pub fn label(&self) -> &str {
     match self {
       EtherType::None => "None (0x0000)",
-      EtherType::Ipv4 => "None (0x0800)",
-      EtherType::Arp  => "None (0x0806)",
-      EtherType::Ipv6 => "None (0x86DD)",
-      EtherType::Vlan => "None (0x8100)",
+      EtherType::Ipv4 => "IPv4 (0x0800)",
+      EtherType::Arp  => "ARP  (0x0806)",
+      EtherType::Ipv6 => "IPv6 (0x86DD)",
+      EtherType::Vlan => "VLAN (0x8100)",
     }
   }
 

@@ -13,7 +13,7 @@ use fltk::{
   frame::Frame,
   group::{Group, Scroll},
   input::Input,
-  menu::MenuBar,
+  menu::{Choice, MenuBar},
   prelude::*,
   window::Window
 };
@@ -77,7 +77,6 @@ pub fn run() {
   //-----------------------------------
   // ETHERNET INTERFACE PANEL
   //-----------------------------------
-  // interface panel
   // group container
   let mut iface_group = Group::new(0, CONTENT_Y, IFACE_W, CONTENT_H, "");
   iface_group.set_frame(FrameType::DownBox);
@@ -112,17 +111,19 @@ pub fn run() {
   // PACKET BUILDER PANEL
   //-----------------------------------
   let mut builder_scroll = Scroll::new(BUILDER_X, CONTENT_Y,BUILDER_W,CONTENT_H, "");
+
   builder_scroll.set_frame(FrameType::DownBox);
 
   // section header
   Frame::new(BUILDER_X, CONTENT_Y, BUILDER_W, 25, "Ethernet Header")
     .set_align(Align::Center);
 
-  // tack vertical position as fields are added
+  // Update vertical position after each field is added.
   let mut field_y = CONTENT_Y + HDR_H + 5;
 
-  // src mac
-  Frame::new(BUILDER_X + MARGIN, field_y, INPUT_W, FIELD_H, "Src MAC")
+
+  // First field: Source MAC Address
+  Frame::new(BUILDER_X + MARGIN, field_y, LABEL_W, FIELD_H, "Src MAC")
     .set_align(Align::Left | Align::Inside);
 
   let mut src_mac_input = Input::new(
@@ -132,7 +133,8 @@ pub fn run() {
 
   field_y += FIELD_H + 5;
 
-  // dst mac
+
+  // Second field: Destination MAC Address
   Frame::new(BUILDER_X + MARGIN, field_y, LABEL_W, FIELD_H, "Dst MAC")
     .set_align(Align::Left | Align::Inside);
 
@@ -141,7 +143,35 @@ pub fn run() {
 
   dst_mac_input.set_value(&config.dst_mac);
 
+  field_y += FIELD_H + 5;
+
+
+  // Third field: EtherType
+  Frame::new(BUILDER_X + MARGIN, field_y, LABEL_W, FIELD_H, "EtherType")
+    .set_align(Align::Left | Align::Inside);
+
+  let mut ethertype_choice = Choice::new(
+    BUILDER_X + MARGIN + LABEL_W, field_y, INPUT_W, FIELD_H, "",);
+
+  for et in packet::EtherType::all() {
+    ethertype_choice.add_choice(et.label());
+  }
+
+  ethertype_choice.set_value(0);
+
+  field_y += FIELD_H + 5;
+
+
+  //-----------------------------------
+  // SEND BUTTON
+  //-----------------------------------
+  field_y += 10;
+
+  let mut send_button = fltk::button::Button::new(
+    BUILDER_X + MARGIN, field_y, 80, 30, "Send");
+
   builder_scroll.end();
+
 
   //-----------------------------------
   // HEX PANEL PREVIEW PANEL
@@ -151,6 +181,20 @@ pub fn run() {
 
   Frame::new(PREVIEW_X, CONTENT_Y, PREVIEW_W, 25, "Hex Preview")
     .set_align(Align::Center);
+
+  let mut hex_display = fltk::text::TextDisplay::new(
+    PREVIEW_X +2,
+    CONTENT_Y + HDR_H,
+    PREVIEW_W - 4,
+    CONTENT_H - HDR_H,
+    ""
+  );
+
+  let hex_buf =  fltk::text::TextBuffer::default();
+
+  hex_display.set_buffer(hex_buf.clone());
+  hex_display.set_text_font(Font::Courier);
+  hex_display.set_text_size(11);
 
   preview_group.end();
 
@@ -172,18 +216,57 @@ pub fn run() {
   //-----------------------------------
   // When user clicks a NIC on the list, update the status bar with the MAC
   // and IP of the selected interface.
+  let interfaces_cb = interfaces.clone();
+  let mut status_iface = status.clone();
+  let mut src_mac_cb = src_mac_input.clone();
+
   iface_browser.set_callback(move |cb| {
-    let idx = cb.value() - 1;
+    let idx = cb.value() - 1; // grab index of currently selected iface. rebase to 0.
 
     if idx >= 0 {
-      let iface = &interfaces[idx as usize];
-      status.set_label(&format!(
+      let iface = &interfaces_cb[idx as usize]; // grab interface
+
+      src_mac_cb.set_value(&iface.mac); // set to selected iface's mac
+
+      status_iface.set_label(&format!( // update status bar
         " {} - {} - {}",
         iface.name, iface.mac, iface.ipv4
       ))
     }
   });
 
+  //-----------------------------------
+  // SEND BUTTON CALLBACK
+  //-----------------------------------
+  let mut status_send = status.clone();
+  let mut hex_buf_cb  = hex_buf.clone();
+
+  send_button.set_callback(move |_| {
+    let cfg = packet::PacketConfig {
+      src_mac   : src_mac_input.value(),
+      dst_mac   : dst_mac_input.value(),
+      ether_type: packet::EtherType::all()[ethertype_choice.value() as usize].clone()
+    };
+
+    match packet::build_packet(&cfg) {
+      // success case
+      Ok(bytes) => {
+        hex_buf_cb.set_text(&hex_dump(&bytes));
+        status_send.set_label("Packet built successfully.");
+      }
+      // error case
+      Err(e) => {
+        status_send.set_label(&format!("Error: {}", e));
+      }
+    }
+  });
+
   app.run().unwrap();
 }
 
+fn hex_dump(bytes: &[u8]) -> String {
+  let mut out = String::new();
+
+  //for (i, chunk) in bytes.chunks(16).enumerate()
+  out
+}
