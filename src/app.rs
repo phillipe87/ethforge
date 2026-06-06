@@ -18,32 +18,33 @@ use fltk::{
   window::Window
 };
 
-// Layout constants
+// ------------------------------------
+// LAYOUT CONSTANTS
+// ------------------------------------
+// Dimensions
 const WIN_W: i32 = 960;
 const WIN_H: i32 = 700;
 
-const MENU_H:     i32 = 30;   // menu bar height
-const STATUS_H:   i32 = 25;   // status bar height
-const IFACE_W:    i32 = 160;  // interface panel width
-const PREVIEW_W:  i32 = 280; // hex preview panel width
+const MENU_H:      i32 = 30;                           // menu bar height
+const STATUS_H:    i32 = 25;                           // status bar height
+const IFACE_W:     i32 = 160;                          // interface panel width
+const PREVIEW_W:   i32 = 280;                          // hex preview panel width
+const BUILDER_W:   i32 = WIN_W - IFACE_W - PREVIEW_W;  // builder takes remaining width
+const IFACE_HDR_H: i32 = 25;                           // Height of interface panel heading
 
-// Derived constants calculated from the above
+// Positions
 const CONTENT_Y: i32 = MENU_H;                          // content area starts below menu
 const CONTENT_H: i32 = WIN_H - MENU_H - STATUS_H;       // content area height
 const BUILDER_X: i32 = IFACE_W;                         // builder starts after iface panel
-const BUILDER_W: i32 = WIN_W - IFACE_W - PREVIEW_W;     // builder takes remaining width
 const PREVIEW_X: i32 = WIN_W - PREVIEW_W;               // preview flush to right edge
 const STATUS_Y:  i32 = WIN_H - STATUS_H;                // status bar at bottom
 
-// Height of interface panel heading
-const IFACE_HDR_H: i32 = 25;
-
 // Builder panel internal layout
-const FIELD_H:      i32 = 25; // height of each input row
-const LABEL_W:      i32 = 80; // width of field labels
-const INPUT_W:      i32 = 160;// width of input fields
-const MARGIN:       i32 = 10; // left margin inside builder panel
-const HDR_H:        i32 = 25; // section header height
+const FIELD_H: i32 = 25;  // height of each input row
+const LABEL_W: i32 = 80;  // width of field labels
+const INPUT_W: i32 = 160; // width of input fields
+const MARGIN:  i32 = 10;  // left margin inside builder panel
+const HDR_H:   i32 = 25;  // section header height
 
 /// Entry point for the GUI, called from `main()`.
 /// Builds the window,
@@ -65,13 +66,18 @@ pub fn run() {
   window.make_resizable(true);
 
 
-  // menu bar _________________________________________________________________
+  //-----------------------------------
+  // MENU BAR
+  //-----------------------------------
   let mut menu = MenuBar::new(0,0,WIN_W, WIN_H, "");
   menu.add_choice("File/Save");
   menu.add_choice("File/Load");
 
 
-  // interface panel __________________________________________________________
+  //-----------------------------------
+  // ETHERNET INTERFACE PANEL
+  //-----------------------------------
+  // interface panel
   // group container
   let mut iface_group = Group::new(0, CONTENT_Y, IFACE_W, CONTENT_H, "");
   iface_group.set_frame(FrameType::DownBox);
@@ -102,8 +108,9 @@ pub fn run() {
   iface_group.end();
 
 
-
-  // Packet Builder Panel _____________________________________________________
+  //-----------------------------------
+  // PACKET BUILDER PANEL
+  //-----------------------------------
   let mut builder_scroll = Scroll::new(BUILDER_X, CONTENT_Y,BUILDER_W,CONTENT_H, "");
   builder_scroll.set_frame(FrameType::DownBox);
 
@@ -136,11 +143,9 @@ pub fn run() {
 
   builder_scroll.end();
 
-
-
-
-
-  // hex preview panel ________________________________________________________
+  //-----------------------------------
+  // HEX PANEL PREVIEW PANEL
+  //-----------------------------------
   let mut preview_group = Group::new(PREVIEW_X, CONTENT_Y, PREVIEW_W, CONTENT_H, "");
   preview_group.set_frame(FrameType::DownBox);
 
@@ -149,26 +154,27 @@ pub fn run() {
 
   preview_group.end();
 
-
-
-
-  // status bar _______________________________________________________________
+  //-----------------------------------
+  // STATUS BAR
+  //-----------------------------------
   let mut status = Frame::new(0, STATUS_Y, WIN_W, STATUS_H, "Ready");
   status.set_frame(FrameType::DownBox);
   status.set_align(Align::Left | Align::Inside);
+
 
   window.end();
   window.resizable(&window);
   window.show();
 
 
-
-
-  // Interface Selection Callback
+  //-----------------------------------
+  // INTERFACE SELECTION CALLBACK
+  //-----------------------------------
   // When user clicks a NIC on the list, update the status bar with the MAC
   // and IP of the selected interface.
   iface_browser.set_callback(move |cb| {
     let idx = cb.value() - 1;
+
     if idx >= 0 {
       let iface = &interfaces[idx as usize];
       status.set_label(&format!(
@@ -180,3 +186,4 @@ pub fn run() {
 
   app.run().unwrap();
 }
+
